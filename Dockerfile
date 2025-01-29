@@ -5,7 +5,8 @@ FROM ollama/ollama AS ollama
 FROM cgr.dev/chainguard/wolfi-base
 
 # Define architecture argument
-ARG TARGETARCH = arm64
+ARG TARGETARCH
+RUN echo "Building for architecture: ${TARGETARCH}"
 
 # Install necessary dependencies
 RUN apk update && apk add --no-cache libstdc++
@@ -15,6 +16,9 @@ COPY --from=ollama /usr/bin/ollama /usr/bin/ollama
 
 # Ensure the target architecture directory exists before copying
 RUN mkdir -p /usr/lib/ollama/runners/
+
+# Debug: Check if the correct directory exists before copying
+RUN ls -la /usr/lib/ollama/runners/
 
 # Copy architecture-specific runner files
 COPY ./${TARGETARCH}/ /usr/lib/ollama/runners/
