@@ -23,3 +23,9 @@ EXPOSE 11434
 
 ENTRYPOINT ["/usr/bin/ollama"]
 CMD ["serve"]
+
+COPY ./entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
