@@ -5,7 +5,7 @@ FROM ollama/ollama AS ollama
 FROM cgr.dev/chainguard/wolfi-base
 
 # Define architecture argument
-ARG TARGETARCH
+ARG TARGETARCH = arm64
 
 # Install necessary dependencies
 RUN apk update && apk add --no-cache libstdc++
