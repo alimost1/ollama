@@ -1,28 +1,27 @@
+# Use ollama base image
 FROM ollama/ollama AS ollama
 
+# Use Chainguard Wolfi base image
 FROM cgr.dev/chainguard/wolfi-base
 
+# Define architecture argument
 ARG TARGETARCH
 
-RUN apk add --no-cache libstdc++
+# Install necessary dependencies
+RUN apk update && apk add --no-cache libstdc++
 
+# Copy Ollama binary from the base image
 COPY --from=ollama /usr/bin/ollama /usr/bin/ollama
 
+# Ensure the target architecture directory exists before copying
+RUN mkdir -p /usr/lib/ollama/runners/
 
-# COPY --from=ollama /usr/lib/ollama/runners/cpu /usr/lib/ollama/runners/cpu
-# In arm64 ollama/ollama image, there is no avx libraries and seems they are not must-have (#2903, #3891)
-# COPY --from=ollama /usr/lib/ollama/runners/cpu_avx /usr/lib/ollama/runners/cpu_avx
-# COPY --from=ollama /usr/lib/ollama/runners/cpu_avx2 /usr/lib/ollama/runners/cpu_avx2
-
+# Copy architecture-specific runner files
 COPY ./${TARGETARCH}/ /usr/lib/ollama/runners/
-
-# Environment variable setup
-ENV OLLAMA_HOST=0.0.0.0
 
 # Expose port for the service
 EXPOSE 11434
 
+# Use entrypoint to start the service
 ENTRYPOINT ["/usr/bin/ollama"]
 CMD ["serve"]
-
-
