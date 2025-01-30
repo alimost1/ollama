@@ -1,11 +1,11 @@
-FROM ubuntu:22.04
+FROM ollama/ollama:latest
 
-# Install Ollama
-RUN apt update && apt install -y curl
-RUN curl -L https://ollama.com/install.sh | sh
+# Option 1: Pull a public model (replace with correct name)
+RUN ollama pull llama3
 
-# Download the model (replace with correct URL/name)
-RUN ollama pull deepseek-1.5
+# Option 2: Build from a Modelfile (if DeepSeek isn’t public)
+COPY Modelfile .
+RUN ollama create deepseek-1.5 -f Modelfile
 
 EXPOSE 11434
 CMD ["ollama", "serve"]
