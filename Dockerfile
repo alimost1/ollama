@@ -12,7 +12,7 @@ RUN git clone https://github.com/jmorganca/ollama.git .
 
 # Build the binary with static linking
 RUN go generate ./... \
-    && go build -ldflags '-linkmode external -extldflags "-static"' -o .
+    && go build -ldflags '-linkmode external -extldflags "-static"' -o ollama .
 
 # Stage 2: Create the final image
 FROM alpine
@@ -38,6 +38,9 @@ RUN addgroup $GROUP && adduser -D -G $GROUP $USER
 
 # Copy the binary from the builder stage
 COPY --from=builder /app/ollama /bin/ollama
+
+# Set the working directory
+WORKDIR /home/$USER
 
 USER $USER:$GROUP
 
