@@ -1,25 +1,44 @@
-FROM ollama/ollama AS ollama
+# Stage 1: Build the binary
+FROM golang:alpine AS builder
 
-FROM cgr.dev/chainguard/wolfi-base
+# Install required dependencies
+RUN apk add --no-cache git build-base cmake bash
 
-RUN apk add --no-cache libstdc++
+# Set the working directory within the container
+WORKDIR /app
 
-COPY --from=ollama /usr/bin/ollama /usr/bin/ollama
-COPY --from=ollama /usr/lib/ollama/runners/cpu /usr/lib/ollama/runners/cpu
+# Clone the source code from the GitHub repository
+RUN git clone https://github.com/jmorganca/ollama.git .
 
-# In arm64 ollama/ollama image, there is no avx libraries and seems they are not must-have (#2903, #3891)
-# COPY --from=ollama /usr/lib/ollama/runners/cpu_avx /usr/lib/ollama/runners/cpu_avx
-# COPY --from=ollama /usr/lib/ollama/runners/cpu_avx2 /usr/lib/ollama/runners/cpu_avx2
+# Build the binary with static linking
+RUN go generate ./... \
+    && go build -ldflags '-linkmode external -extldflags "-static"' -o .
 
-# In this image, we download llama3.2 model directly
-RUN /usr/bin/ollama serve & sleep 5 && \
-      /usr/bin/ollama pull deepseek-r1:1.5b
+# Stage 2: Create the final image
+FROM alpine
 
-# Environment variable setup
-ENV OLLAMA_HOST=0.0.0.0
+ENV OLLAMA_HOST "0.0.0.0"
 
-# Expose port for the service
-EXPOSE 11434
+# Install required runtime dependencies
+RUN apk add --no-cache libstdc++ curl
 
-ENTRYPOINT ["/usr/bin/ollama"]
-CMD ["serve"]
+# NOTE: UNCOMMENT THIS IF YOU'RE CHANGING THE MODELFILE
+# COPY Modelfile /Modelfile
+
+# Copy the custom entry point script into the container
+COPY entrypoint.sh /entrypoint.sh
+
+# Make the script executable
+RUN chmod +x /entrypoint.sh
+
+# Create a non-root user
+ARG USER=ollama
+ARG GROUP=ollama
+RUN addgroup $GROUP && adduser -D -G $GROUP $USER
+
+# Copy the binary from the builder stage
+COPY --from=builder /app/ollama /bin/ollama
+
+USER $USER:$GROUP
+
+ENTRYPOINT ["/entrypoint.sh"]
