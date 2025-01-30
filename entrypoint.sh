@@ -1,11 +1,12 @@
-# Use the official Ollama base image
-FROM ollama/ollama:latest
 
-# Pull the DeepSeek-R1 1.5B model from Ollama’s library
-RUN ollama pull deepseek-r1:1.5b
+#!/bin/sh
 
-# Expose the default Ollama port
-EXPOSE 11434
+./bin/ollama serve &
 
-# Start Ollama when the container runs
-CMD ["ollama", "serve"]
+sleep 5
+
+curl -X POST http://localhost:11434/api/pull -d '{"name": "llama3"}'
+
+sleep 10
+
+tail -f /dev/null
