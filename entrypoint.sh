@@ -1,15 +1,11 @@
-#!/bin/bash
+# Use the official Ollama base image
+FROM ollama/ollama:latest
 
-echo "Starting Ollama server..."
-ollama serve &
-SERVE_PID=$!
+# Pull the DeepSeek-R1 1.5B model from Ollama’s library
+RUN ollama pull deepseek-r1:1.5b
 
-echo "Waiting for Ollama server to be active..."
-while ! ollama list | grep -q 'NAME'; do
-  sleep 1
-done
+# Expose the default Ollama port
+EXPOSE 11434
 
-
-ollama run deepseek-r1:1.5b
-
-wait $SERVE_PID
+# Start Ollama when the container runs
+CMD ["ollama", "serve"]
